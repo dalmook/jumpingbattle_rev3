@@ -99,8 +99,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (walkInInput) walkInInput.value = walkInSelect.value;
   }
 
+
   // 최초 옵션 생성
   buildTimeOptions(false);
+
+  // ✅ 백그라운드/잠금 후 복귀 시 즉시 최신 옵션 반영
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !userPickedTime) buildTimeOptions(true);
+  });
+  window.addEventListener('focus', () => {
+    if (!userPickedTime) buildTimeOptions(true);
+  });
+
+  // 사용자가 직접 변경하면 그 값 유지
+  walkInSelect?.addEventListener('change', () => {
+    userPickedTime = true;
+    if (walkInInput) walkInInput.value = walkInSelect.value;
+    updateDraft?.();
+  });
+
 
   // 사용자가 직접 변경하면 그 값 유지
   walkInSelect?.addEventListener('change', () => {
