@@ -110,16 +110,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 setInterval(() => {
+  // ✅ 사용자가 직접 선택한 상태면 자동 갱신 금지
+  // (단, 선택한 시간이 '유효하지 않게 되었는지'만 체크해서 필요 시 보정)
   const prev = walkInSelect?.value || '';
-  buildTimeOptions(true); // 옵션 갱신(가능하면 기존 값 유지)
+  if (!walkInSelect) return;
 
-  // 사용자가 직접 고른 시간이었는데, 시간이 지나서 목록에서 사라졌으면 자동 보정
-  if (userPickedTime && prev && walkInSelect && walkInSelect.value !== prev) {
-    userPickedTime = false; // 이제 다시 자동 갱신 대상(원하면 true로 둬도 됨)
+  // 드롭다운 조작 중이면 갱신/보정 금지(열어둔 상태에서 튀는 거 방지)
+  if (document.activeElement === walkInSelect) return;
+
+  // 1) 옵션 목록을 새로 만들기 (유저가 선택 안 했을 때만)
+  if (!userPickedTime) {
+    buildTimeOptions(true);
+    return;
+  }
+
+  // 2) 유저가 선택한 상태면 "그 값이 아직 옵션에 존재하는지"만 확인
+  const stillExists = Array.from(walkInSelect.options).some(o => o.value === prev);
+
+  // 옵션을 최신으로 재생성해서(현재 시간 기준) prev가 사라졌는지 판단
+  // → 이때도 buildTimeOptions는 prev 유지 시도하므로, 사라졌으면 값이 달라짐
+  buildTimeOptions(true);
+
+  if (userPickedTime && prev && !Array.from(walkInSelect.options).some(o => o.value === prev)) {
+    // 선택한 시간이 이제 불가능하면 다음 가능한 시간으로 자동 보정
+    userPickedTime = false; // 이후는 자동 갱신 허용(원하면 true로 둬도 됨)
     showSnack('선택한 시간이 지나서 다음 가능한 시간으로 바꿨어요 🙂', 'warn', 1600);
     updateDraft?.();
   }
-}, 60 * 1000);
+}, 10 * 1000);
+
 
 
   
