@@ -190,6 +190,30 @@ body::before{
   display:flex; align-items:center; gap:8px;
   margin:0; font-size:1.05rem;
 }
+/* ✅ 방 선택 옆 예약시간 드롭다운 */
+.head-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.timepick{
+  margin-left:6px;
+  display:inline-flex;
+  align-items:center;
+}
+
+.timepick__select{
+  border:1.5px solid var(--border);
+  background:rgba(255,255,255,0.75);
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:900;
+  font-size:0.9rem;
+  min-height:40px;
+}
+
 .step{
   display:inline-flex; align-items:center; justify-content:center;
   width:26px; height:26px; border-radius:999px;
