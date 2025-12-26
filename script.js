@@ -51,6 +51,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const stepperFill = $('#stepperFill');
   const dots = $$('.dot');
+  // ✅ 예약시간 드롭다운
+  const walkInInput = $('#walkInTime');
+  const walkInSelect = $('#walkInSelect');
+  let userPickedTime = false;
+
+  const timeToMin = (t) => {
+    const [h, m] = String(t).split(':').map(Number);
+    return (h * 60) + m;
+  };
+  const minToTime = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  };
+
+  function buildTimeOptions(preserve = true) {
+    if (!walkInSelect) return;
+
+    const prev = walkInSelect.value;
+    walkInSelect.innerHTML = '';
+
+    // 기본값: 기존 로직(nearest20Slot) 그대로 사용
+    let base = nearest20Slot(new Date());
+    let startMin = timeToMin(base);
+    const endMin = 23 * 60; // 23:00까지
+
+    // 만약 시간이 너무 늦어서 base가 23:00 넘어가는 케이스면 23:00만
+    if (startMin > endMin) startMin = endMin;
+
+    for (let t = startMin; t <= endMin; t += 20) {
+      const v = minToTime(t);
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      walkInSelect.appendChild(opt);
+    }
+
+    // 값 유지(가능하면), 아니면 첫 옵션(=기본값)
+    if (preserve && prev && Array.from(walkInSelect.options).some(o => o.value === prev)) {
+      walkInSelect.value = prev;
+    } else {
+      walkInSelect.selectedIndex = 0;
+    }
+
+    // hidden input도 동기화
+    if (walkInInput) walkInInput.value = walkInSelect.value;
+  }
+
+  // 최초 옵션 생성
+  buildTimeOptions(false);
+
+  // 사용자가 직접 변경하면 그 값 유지
+  walkInSelect?.addEventListener('change', () => {
+    userPickedTime = true;
+    if (walkInInput) walkInInput.value = walkInSelect.value;
+    updateDraft?.(); // 아래에 updateDraft 확장하면 자동 저장됨
+  });
+
+  // 페이지 켜놓고 시간이 지나면(유저가 직접 선택 안 했을 때만) 자동 갱신
+  setInterval(() => {
+    if (!userPickedTime) buildTimeOptions(true);
+  }, 60 * 1000);
+
+  
 function syncStickybarHeight(){
   const bar = document.querySelector('.stickybar');
   if (!bar) return;
@@ -167,12 +231,14 @@ window.addEventListener('resize', syncStickybarHeight);
     saveDraft({
       roomSize: roomInput.value || '',
       difficulty: diffInput.value || '',
+      walkInTime: (walkInSelect?.value || ''), // ✅ 추가
       adultCount: Number($('#adultCount').value || 0),
       youthCount: Number($('#youthCount').value || 0),
       teamName: ($('#teamName').value || '').trim(),
       vehicle: ($('#vehicle').value || '').trim()
     });
   }
+
 
   function computeProgress() {
     const room = !!roomInput.value;
@@ -241,6 +307,11 @@ window.addEventListener('resize', syncStickybarHeight);
     if (Number.isFinite(d.youthCount)) $('#youthCount').value = d.youthCount;
     if (d.teamName) $('#teamName').value = d.teamName;
     if (d.vehicle) $('#vehicle').value = d.vehicle;
+    if (d.walkInTime && walkInSelect && Array.from(walkInSelect.options).some(o => o.value === d.walkInTime)) {
+      walkInSelect.value = d.walkInTime;
+      userPickedTime = true;
+      if (walkInInput) walkInInput.value = d.walkInTime;
+    }
 
     // 버튼 클릭 복원 과정에서 refresh가 호출될 수 있으니 마지막에 한번 더
     refresh();
@@ -293,7 +364,10 @@ window.addEventListener('resize', syncStickybarHeight);
   // 전체 리셋
   function hardReset() {
     form.reset();
-    $('#walkInTime').value = '';
+
+    userPickedTime = false;
+    buildTimeOptions(false); // ✅ 기본값(기존 로직)으로 다시 생성
+
 
     roomButtons.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked','false'); });
     diffButtons.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked','false'); });
@@ -320,8 +394,9 @@ window.addEventListener('resize', syncStickybarHeight);
     const msg = validate();
     if (msg) { showSnack(msg, 'warn'); vibrate(20); return; }
 
-    const slotStr = nearest20Slot(new Date());
+    const slotStr = (walkInSelect?.value || nearest20Slot(new Date()));
     $('#walkInTime').value = slotStr;
+
 
     const adult = Number($('#adultCount').value || 0);
     const youth = Number($('#youthCount').value || 0);
