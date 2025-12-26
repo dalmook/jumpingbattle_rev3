@@ -52,11 +52,20 @@
       <input type="hidden" id="difficulty" name="difficulty" required />
 
       <!-- 1. 방 선택 -->
-      <section class="card">
-        <div class="card__head">
-          <h3><span class="step">1</span> 방 선택</h3>
-          <span class="chip">추천</span>
-        </div>
+    <div class="card__head">
+      <h3 class="head-row">
+        <span class="step">1</span> 방 선택
+    
+        <!-- ✅ 예약 시간 드롭다운 (기본값: 기존 walkInTime 로직) -->
+        <label class="timepick" for="walkInSelect" aria-label="예약 시간 선택">
+          <span class="sr-only">예약 시간</span>
+          <select id="walkInSelect" class="timepick__select"></select>
+        </label>
+      </h3>
+    
+      <span class="chip">추천</span>
+    </div>
+
 
         <div class="seg-row scroll-x room-buttons" role="radiogroup" aria-label="방 선택">
           <button type="button" class="seg" data-value="C2" role="radio" aria-checked="false">
