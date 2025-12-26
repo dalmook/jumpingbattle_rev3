@@ -109,10 +109,18 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDraft?.(); // 아래에 updateDraft 확장하면 자동 저장됨
   });
 
-  // 페이지 켜놓고 시간이 지나면(유저가 직접 선택 안 했을 때만) 자동 갱신
-  setInterval(() => {
-    if (!userPickedTime) buildTimeOptions(true);
-  }, 60 * 1000);
+setInterval(() => {
+  const prev = walkInSelect?.value || '';
+  buildTimeOptions(true); // 옵션 갱신(가능하면 기존 값 유지)
+
+  // 사용자가 직접 고른 시간이었는데, 시간이 지나서 목록에서 사라졌으면 자동 보정
+  if (userPickedTime && prev && walkInSelect && walkInSelect.value !== prev) {
+    userPickedTime = false; // 이제 다시 자동 갱신 대상(원하면 true로 둬도 됨)
+    showSnack('선택한 시간이 지나서 다음 가능한 시간으로 바꿨어요 🙂', 'warn', 1600);
+    updateDraft?.();
+  }
+}, 60 * 1000);
+
 
   
 function syncStickybarHeight(){
